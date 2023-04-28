@@ -11,12 +11,6 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-PASSWORD = "password"
-TEXT = "Hello, 42!"
-ENCODED = "HWYOUF2IG2L76KAOFRHQOO2GBZTUCQKBIFAUE22TG5YDMM3XM5WTMQ3" + \
-    "VPFBE2ZSRM42DAOKQNE2FIQTEKRLTAZRVJJLWM6KYKVFEWQLQNBLDMSBZPFMV" + \
-    "M33DPFIEYNKDMRBHM6KFMFNDO2CIIZVXM23UOJGUE6TSJYZHQWLNGRQTOSDDM" + \
-    "F3XMZZ5HU======"
 SALT_SIZE = 16
 
 def main():
