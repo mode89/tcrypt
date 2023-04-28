@@ -22,7 +22,7 @@ def main():
         if args.edit:
             new_text = edit(text)
             new_data = encrypt(password, new_text)
-            print("Encrypted: ", new_data)
+            print_encrypted(new_data)
         else:
             print(text)
     else:
@@ -30,7 +30,7 @@ def main():
         if text:
             password = getpass()
             data = encrypt(password, text)
-            print("Encrypted: ", data)
+            print_encrypted(data)
 
 def parse_arguments():
     parser = ArgumentParser()
@@ -75,6 +75,9 @@ def edit(text):
         subprocess.run([editor, f.name], check=True);
         f.seek(0)
         return f.read()
+
+def print_encrypted(data):
+    print(f"Encrypted: {data}")
 
 if __name__ == "__main__":
     main()
