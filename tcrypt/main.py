@@ -1,4 +1,5 @@
 import base64
+from getpass import getpass
 import os
 
 from cryptography.fernet import Fernet
@@ -14,8 +15,10 @@ ENCODED = "HWYOUF2IG2L76KAOFRHQOO2GBZTUCQKBIFAUE22TG5YDMM3XM5WTMQ3" + \
 SALT_SIZE = 16
 
 def main():
-    # print(encrypt(PASSWORD, TEXT))
-    print(decrypt(PASSWORD, ENCODED))
+    encoded_text = input()
+    password = getpass()
+    text = decrypt(password, encoded_text)
+    print(text)
 
 def encrypt(password, text):
     salt = os.urandom(SALT_SIZE)
@@ -24,8 +27,9 @@ def encrypt(password, text):
     return base64.b32encode(salt + token).decode("utf-8")
 
 def decrypt(password, text):
-    decoded = base64.b32decode(text)
+    decoded = base64.b32decode(text.encode("utf-8"))
     salt = decoded[:SALT_SIZE]
+    assert len(salt) == SALT_SIZE, "Not enough salt"
     token = decoded[SALT_SIZE:]
     f = make_fernet(password, salt)
     return f.decrypt(token).decode("utf-8")
