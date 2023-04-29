@@ -12,6 +12,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 SALT_SIZE = 16
+BIN_VERSION = 1
 
 def main():
     args = parse_arguments()
@@ -47,10 +48,16 @@ def encrypt(password, text):
     salt = os.urandom(SALT_SIZE)
     f = make_fernet(password, salt)
     token = f.encrypt(text.encode("utf-8"))
-    return base64.b32encode(salt + token).decode("utf-8")
+    return f"{BIN_VERSION:02}" + \
+        base64.b32encode(salt + token).decode("utf-8")
 
 def decrypt(password, text):
-    decoded = base64.b32decode(text.encode("utf-8"))
+    try:
+        version = int(text[:2])
+    except:
+        raise RuntimeError("Failed to parse binary version")
+    assert version == BIN_VERSION, f"Unsupported version: {version}"
+    decoded = base64.b32decode(text[2:].encode("utf-8"))
     salt = decoded[:SALT_SIZE]
     assert len(salt) == SALT_SIZE, "Not enough salt"
     token = decoded[SALT_SIZE:]
