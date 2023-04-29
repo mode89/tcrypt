@@ -67,14 +67,18 @@ def make_fernet(password, salt):
     return Fernet(key)
 
 def edit(text):
+    assert isinstance(text, str)
     editor = os.environ.get("EDITOR")
     assert editor, "EDITOR environment variable is not set"
-    with tempfile.NamedTemporaryFile(mode="w+", dir="/dev/shm") as f:
-        f.write(text)
-        f.flush()
-        subprocess.run([editor, f.name], check=True);
-        f.seek(0)
-        return f.read()
+    try:
+        temp_file, temp_file_path = tempfile.mkstemp(dir="/dev/shm")
+        os.write(temp_file, text.encode("utf-8"))
+        os.close(temp_file)
+        subprocess.run([editor, temp_file_path], check=True)
+        with open(temp_file_path, "r") as f:
+            return f.read()
+    finally:
+        os.remove(temp_file_path)
 
 def print_encrypted(data):
     print(f"Encrypted: {data}")
