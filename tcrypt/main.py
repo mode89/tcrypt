@@ -69,7 +69,7 @@ def make_fernet(password, salt):
 def edit(text):
     editor = os.environ.get("EDITOR")
     assert editor, "EDITOR environment variable is not set"
-    with tempfile.NamedTemporaryFile(mode="w+") as f:
+    with tempfile.NamedTemporaryFile(mode="w+", dir="/dev/shm") as f:
         f.write(text)
         f.flush()
         subprocess.run([editor, f.name], check=True);
