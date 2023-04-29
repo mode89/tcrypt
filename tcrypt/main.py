@@ -6,13 +6,14 @@ from select import select
 import subprocess
 import sys
 import tempfile
+import zlib
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 SALT_SIZE = 16
-BIN_VERSION = 1
+BIN_VERSION = 2
 
 def main():
     args = parse_arguments()
@@ -45,9 +46,10 @@ def has_some_input():
 def encrypt(password, text):
     assert password, "Password is empty"
     assert text, "Nothing to encrypt"
+    data_to_encrypt = zlib.compress(text.encode("utf-8"), level=9)
     salt = os.urandom(SALT_SIZE)
     f = make_fernet(password, salt)
-    token = f.encrypt(text.encode("utf-8"))
+    token = f.encrypt(data_to_encrypt)
     return f"{BIN_VERSION:02}" + \
         base64.b32encode(salt + token).decode("utf-8")
 
@@ -56,13 +58,26 @@ def decrypt(password, text):
         version = int(text[:2])
     except:
         raise RuntimeError("Failed to parse binary version")
-    assert version == BIN_VERSION, f"Unsupported version: {version}"
+    f = globals().get(f"decrypt_{version}")
+    assert f, f"Unsupported binary version: {version}"
+    return f(password, text)
+
+def decrypt_1(password, text):
     decoded = base64.b32decode(text[2:].encode("utf-8"))
     salt = decoded[:SALT_SIZE]
     assert len(salt) == SALT_SIZE, "Not enough salt"
     token = decoded[SALT_SIZE:]
     f = make_fernet(password, salt)
     return f.decrypt(token).decode("utf-8")
+
+def decrypt_2(password, text):
+    decoded = base64.b32decode(text[2:].encode("utf-8"))
+    salt = decoded[:SALT_SIZE]
+    assert len(salt) == SALT_SIZE, "Not enough salt"
+    token = decoded[SALT_SIZE:]
+    f = make_fernet(password, salt)
+    decrypted = f.decrypt(token)
+    return zlib.decompress(decrypted).decode("utf-8")
 
 def make_fernet(password, salt):
     kdf = PBKDF2HMAC(
