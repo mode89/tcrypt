@@ -13,7 +13,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 SALT_SIZE = 16
-BIN_VERSION = 2
+BIN_VERSION = 3
 
 def main():
     args = parse_arguments()
@@ -50,8 +50,9 @@ def encrypt(password, text):
     salt = os.urandom(SALT_SIZE)
     f = make_fernet(password, salt)
     token = f.encrypt(data_to_encrypt)
+    token_raw = base64.urlsafe_b64decode(token)
     return f"{BIN_VERSION:02}" + \
-        base64.b32encode(salt + token).decode("utf-8")
+        base64.urlsafe_b64encode(salt + token_raw).decode("utf-8")
 
 def decrypt(password, text):
     try:
@@ -75,6 +76,16 @@ def decrypt_2(password, text):
     salt = decoded[:SALT_SIZE]
     assert len(salt) == SALT_SIZE, "Not enough salt"
     token = decoded[SALT_SIZE:]
+    f = make_fernet(password, salt)
+    decrypted = f.decrypt(token)
+    return zlib.decompress(decrypted).decode("utf-8")
+
+def decrypt_3(password, text):
+    decoded = base64.urlsafe_b64decode(text[2:].encode("utf-8"))
+    salt = decoded[:SALT_SIZE]
+    assert len(salt) == SALT_SIZE, "Not enough salt"
+    token_raw = decoded[SALT_SIZE:]
+    token = base64.urlsafe_b64encode(token_raw)
     f = make_fernet(password, salt)
     decrypted = f.decrypt(token)
     return zlib.decompress(decrypted).decode("utf-8")
